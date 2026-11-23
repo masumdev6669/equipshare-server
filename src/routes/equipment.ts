@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Equipment } from "../models/Equipment";
-import { verifyToken, AuthRequest } from "../middleware/auth";
+import { verifyToken, verifyAdmin, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -18,11 +18,29 @@ router.get("/recent", async (_req, res) => {
   res.json(equipment);
 });
 
+router.get("/admin/all", verifyToken, verifyAdmin, async (_req, res) => {
+  const equipment = await Equipment.find().sort({ createdAt: -1 });
+  res.json(equipment);
+});
+
 router.get("/owner/mine", verifyToken, async (req: AuthRequest, res) => {
   const equipment = await Equipment.find({ ownerEmail: req.user!.email }).sort({
     createdAt: -1,
   });
   res.json(equipment);
+});
+
+router.put("/admin/:id/status", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const item = await Equipment.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: "Equipment not found" });
+
+    item.status = req.body.status;
+    await item.save();
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
 });
 
 router.get("/:id", async (req, res) => {
@@ -80,26 +98,6 @@ router.delete("/:id", verifyToken, async (req: AuthRequest, res) => {
     res.json({ message: "Equipment deleted" });
   } catch {
     res.status(400).json({ message: "Invalid equipment id" });
-  }
-});
-
-import { verifyAdmin } from "../middleware/auth";
-
-router.get("/admin/all", verifyToken, verifyAdmin, async (_req, res) => {
-  const equipment = await Equipment.find().sort({ createdAt: -1 });
-  res.json(equipment);
-});
-
-router.put("/admin/:id/status", verifyToken, verifyAdmin, async (req, res) => {
-  try {
-    const item = await Equipment.findById(req.params.id);
-    if (!item) return res.status(404).json({ message: "Equipment not found" });
-
-    item.status = req.body.status;
-    await item.save();
-    res.json(item);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
   }
 });
 
