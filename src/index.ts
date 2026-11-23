@@ -1,7 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import mongoose from "mongoose";
+import { connectDB } from "./config/db";
+import equipmentRoutes from "./routes/equipment";
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -13,10 +14,8 @@ app.get("/", (_req, res) => {
   res.json({ message: "EquipShare API is running" });
 });
 
-mongoose
-  .connect(process.env.MONGO_URI as string)
-  .then(() => {
-    console.log("MongoDB connected");
-    app.listen(port, () => console.log(`Server running on port ${port}`));
-  })
-  .catch((err) => console.error("DB error", err));
+app.use("/api/equipment", equipmentRoutes);
+
+connectDB().then(() => {
+  app.listen(port, () => console.log(`Server running on port ${port}`));
+});
