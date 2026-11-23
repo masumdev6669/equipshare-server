@@ -83,4 +83,24 @@ router.delete("/:id", verifyToken, async (req: AuthRequest, res) => {
   }
 });
 
+import { verifyAdmin } from "../middleware/auth";
+
+router.get("/admin/all", verifyToken, verifyAdmin, async (_req, res) => {
+  const equipment = await Equipment.find().sort({ createdAt: -1 });
+  res.json(equipment);
+});
+
+router.put("/admin/:id/status", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const item = await Equipment.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: "Equipment not found" });
+
+    item.status = req.body.status;
+    await item.save();
+    res.json(item);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 export default router;
