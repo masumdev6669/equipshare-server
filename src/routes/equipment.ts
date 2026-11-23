@@ -18,6 +18,13 @@ router.get("/recent", async (_req, res) => {
   res.json(equipment);
 });
 
+router.get("/owner/mine", verifyToken, async (req: AuthRequest, res) => {
+  const equipment = await Equipment.find({ ownerEmail: req.user!.email }).sort({
+    createdAt: -1,
+  });
+  res.json(equipment);
+});
+
 router.get("/:id", async (req, res) => {
   try {
     const item = await Equipment.findById(req.params.id);
