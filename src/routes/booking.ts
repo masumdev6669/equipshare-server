@@ -116,4 +116,21 @@ router.get("/admin", verifyToken, verifyAdmin, async (_req, res) => {
   res.json(bookings);
 });
 
+router.put("/:id/status", verifyToken, async (req: AuthRequest, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+    if (booking.ownerEmail !== req.user!.email && req.user!.role !== "Admin") {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    booking.bookingStatus = req.body.status;
+    await booking.save();
+    res.json(booking);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update booking status" });
+  }
+});
+
 export default router;
