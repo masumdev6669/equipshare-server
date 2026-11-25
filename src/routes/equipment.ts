@@ -43,13 +43,29 @@ router.put("/admin/:id/status", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
-    const item = await Equipment.findById(req.params.id);
-    if (!item) return res.status(404).json({ message: "Equipment not found" });
-    res.json(item);
-  } catch {
-    res.status(400).json({ message: "Invalid equipment id" });
+    const { search, category, rentalType, sort } = req.query;
+    let query: any = { status: "Approved" };
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { location: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (category) query.category = category;
+    if (rentalType) query.rentalType = rentalType;
+
+    let sortOption: any = { createdAt: -1 };
+    if (sort === "price_asc") sortOption = { rentalPrice: 1 };
+    if (sort === "price_desc") sortOption = { rentalPrice: -1 };
+
+    const equipment = await Equipment.find(query).sort(sortOption);
+    res.json(equipment);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch equipment" });
   }
 });
 
