@@ -64,4 +64,24 @@ router.put(
   },
 );
 
+router.put("/update-profile", verifyToken, async (req: AuthRequest, res) => {
+  try {
+    const { name, phone, address } = req.body;
+    const client = new MongoClient(process.env.MONGO_URI as string);
+    await client.connect();
+    const db = client.db("equipshare");
+
+    await db
+      .collection("user")
+      .updateOne(
+        { email: req.user!.email },
+        { $set: { name, phone, address } },
+      );
+
+    res.json({ message: "Profile updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update profile" });
+  }
+});
+
 export default router;
