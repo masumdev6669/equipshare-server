@@ -1,7 +1,8 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IBooking extends Document {
-  equipmentId: mongoose.Types.ObjectId;
+  _id: Types.ObjectId;
+  equipmentId: Types.ObjectId;
   equipmentName: string;
   customerEmail: string;
   customerName: string;
@@ -11,7 +12,7 @@ export interface IBooking extends Document {
   quantity: number;
   contactNumber: string;
   deliveryAddress: string;
-  additionalNotes: string;
+  additionalNotes?: string;
   totalAmount: number;
   paymentStatus: "Pending" | "Paid" | "Failed";
   bookingStatus: "Pending" | "Approved" | "Completed" | "Cancelled";

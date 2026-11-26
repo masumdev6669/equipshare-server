@@ -4,11 +4,30 @@ import { verifyToken, verifyAdmin, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
-router.get("/", async (_req, res) => {
-  const equipment = await Equipment.find({ status: "Approved" }).sort({
-    createdAt: -1,
-  });
-  res.json(equipment);
+router.get("/", async (req, res) => {
+  try {
+    const { search, category, rentalType, sort } = req.query;
+    let query: any = { status: "Approved" };
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { location: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (category) query.category = category;
+    if (rentalType) query.rentalType = rentalType;
+
+    let sortOption: any = { createdAt: -1 };
+    if (sort === "price_asc") sortOption = { rentalPrice: 1 };
+    if (sort === "price_desc") sortOption = { rentalPrice: -1 };
+
+    const equipment = await Equipment.find(query).sort(sortOption);
+    res.json(equipment);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch equipment" });
+  }
 });
 
 router.get("/recent", async (_req, res) => {
@@ -43,29 +62,13 @@ router.put("/admin/:id/status", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
-router.get("/", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const { search, category, rentalType, sort } = req.query;
-    let query: any = { status: "Approved" };
-
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { location: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    if (category) query.category = category;
-    if (rentalType) query.rentalType = rentalType;
-
-    let sortOption: any = { createdAt: -1 };
-    if (sort === "price_asc") sortOption = { rentalPrice: 1 };
-    if (sort === "price_desc") sortOption = { rentalPrice: -1 };
-
-    const equipment = await Equipment.find(query).sort(sortOption);
-    res.json(equipment);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch equipment" });
+    const item = await Equipment.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: "Equipment not found" });
+    res.json(item);
+  } catch (err) {
+    res.status(400).json({ message: "Invalid equipment id" });
   }
 });
 
